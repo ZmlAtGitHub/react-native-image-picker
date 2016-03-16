@@ -61,7 +61,8 @@ RCT_EXPORT_METHOD(openCamera:(NSDictionary *)options resolve:(RCTResponseSenderB
     }
     
     if (self.picker) {
-        return;
+        [self.picker dismissViewControllerAnimated:NO completion:NULL];
+        self.picker = nil;
     }
     
     self.resolveBlock = resolve;
@@ -107,9 +108,11 @@ RCT_EXPORT_METHOD(openCamera:(NSDictionary *)options resolve:(RCTResponseSenderB
     picker.delegate = self;
     self.picker = picker;
     
-    UIViewController *rootViewController = RCTKeyWindow().rootViewController;
-    [rootViewController presentViewController:picker animated:YES completion:nil];
-    
+    UIViewController *controller = RCTKeyWindow().rootViewController;
+    while (controller.presentedViewController) {
+        controller = controller.presentedViewController;
+    }
+    [controller presentViewController:picker animated:YES completion:nil];
 }
 
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary<NSString *,id> *)info
