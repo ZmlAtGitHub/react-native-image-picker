@@ -1,0 +1,30 @@
+{
+  "name": "react-native-image-picker",
+  "version": "1.0.0",
+  "description": "image-picker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lvbingru/react-native-image-picker.git"
+  },
+  "keywords": [
+    "react-native",
+    "ios",
+    "android",
+    "image",
+    "image-picker"
+  ],
+  "author": "lvbingru",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lvbingru/react-native-image-picker/issues"
+  },
+  "homepage": "https://github.com/lvbingru/react-native-image-picker#readme",
+  "dependencies": {
+    "react-native-vector-icons": "^1.2.1",
+    "semver": "^5.1.0"
+  },
+}
