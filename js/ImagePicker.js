@@ -6,13 +6,18 @@ import {styles} from './ImagePicker.style.js'
 
 import React, {InteractionManager, Component, PropTypes, View, Text, ListView, Image, Platform, TouchableOpacity, Alert, CameraRoll} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Camera from './Camera';
+import SystemImagePicker from '../SystemImagePicker';
+import semver from 'semver';
+import packageData from 'react-native/package.json';
 
 const propTypes = {
+    limit : PropTypes.number,
+    onSelectFinished : PropTypes.func,
+    navigator : PropTypes.object,
 }
 
 const defaultProps = {
-    limit : 65535,
+    limit: 65535,
 }
 
 export default class ImagePicker extends Component {
@@ -23,18 +28,17 @@ export default class ImagePicker extends Component {
         this.selectedArray = [];
 
         this.state = {
-            dataSource: new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2 || r1.selected!==r2.selected}).cloneWithRows([]),
+            dataSource: new ListView.DataSource({rowHasChanged: (r1, r2) => (r1 !== r2 || r1.selected!==r2.selected)}).cloneWithRows([]),
         };
     }
 
     componentDidMount() {
         InteractionManager.runAfterInteractions(() => {
-            this.fetchData()
+            this.fetchData();
         });
     }
 
     unSelectedAll() {
-        this.selectedArray = []
         this.imagesArray = this.imagesArray.map((el,index)=> {
             if(el.selected) {
                 return {...el, selected: false}
@@ -42,12 +46,12 @@ export default class ImagePicker extends Component {
             else {
                 return el
             }
-        })
-        this.updateDataSource();
+        });
+        this.selectedArray = [];
+        this.updateDataSource(0);
     }
 
     render() {
-        const {limit, onSelectFinished} = this.props.params;
         const {dataSource} = this.state;
 
         return (
@@ -82,13 +86,10 @@ export default class ImagePicker extends Component {
                     </TouchableOpacity>
                     <TouchableOpacity
                         style = {[styles.bntBottom]}
-                        onPress = {()=>{
-                            onSelectFinished && onSelectFinished(this.selectedArray);
-                            this.props.navigator.pop();
-                        }}
+                        onPress = {this.onFinish.bind(this)}
                     >
                         {
-                            this.selectedArray.length!==0 &&
+                            !!this.selectedArray.length &&
                               <View style = {styles.viewNum}>
                                   <Text style = {styles.txtNum}>{this.selectedArray.length}</Text>
                               </View>
@@ -180,84 +181,92 @@ export default class ImagePicker extends Component {
 
         const list = this.imagesArray;
 
-        React.CameraRoll.getPhotos({
-            first : 100,
-            after : (next && list.length > 0)?this.getImage(list[list.length-1]) :undefined,
-        }).then(data=>{
-            if (data.edges.length) {
-                data.edges.forEach((el)=>{
-                    this.checkSelected(el)
-                    list.push({...el});
-                })
+        this.getPhotos({
+              first: 100,
+              after: (next && list.length > 0) ? this.getImage(list[list.length - 1]) : undefined,
+          },
+          data=> {
+              if (data.edges.length) {
+                  data.edges.forEach(el=> {
+                      list.push({...el, selected:false});
+                  })
 
-                InteractionManager.runAfterInteractions(() => {
-                    this.updateDataSource();
-                });
-            }
-        },e=>{
-        })
+                  InteractionManager.runAfterInteractions(() => {
+                      this.updateDataSource();
+                  });
+              }
+          },
+          e=> {
+          }
+        );
+    }
+
+    getPhotos(parmas, success, failed) {
+        if (semver.gte(packageData.version, '0.20.0')) {
+            CameraRoll.getPhotos(parmas).then(r=>{
+                success(r);
+            },e=>{
+                failed(e);
+            })
+        }
+        else {
+            CameraRoll.getPhotos(params, success, failed);
+        }
     }
 
     getImage(obj) {
-        return obj.node.image.uri
-    }
-
-    checkSelected(obj) {
-        const uri = this.getImage(obj)
-        for (let i =0;i<this.selectedArray.length;i++) {
-            const item = this.selectedArray[i]
-            if (uri === this.getImage(item)) {
-                obj.selected = true
-                this.selectedArray.splice(i,1,obj)
-                return
-            }
-        }
-        obj.selected = false
+        return obj.node.image.uri;
     }
 
     onSelectedChanged(rowData, rowIndex) {
-        const {limit} = this.props.params
+        const {limit} = this.props;
 
-        const should = rowData.selected || this.selectedArray.length < limit
+        const should = rowData.selected || this.selectedArray.length < limit;
         if (!should) {
-            Alert.alert("最多还能选择"+limit+"张");
-            return false
+            Alert.alert("最多选择"+limit+"张");
+            return false;
         }
 
+        const uri = this.getImage(rowData);
         if (rowData.selected) {
-            const index = this.selectedArray.indexOf(rowData)
-            this.selectedArray.splice(index,1)
+            const index = this.selectedArray.indexOf(uri)
+            this.selectedArray.splice(index,1);
         }
         else {
-            this.selectedArray.push(rowData)
+            this.selectedArray.push(uri);
         }
+
         this.imagesArray = this.imagesArray.map((el,index)=> {
-                if (index === rowIndex) {
-                    return {...el,selected: !rowData.selected}
-                }
-                else {
-                    return el;
-                }
+            let object = el;
+            if (index === rowIndex) {
+                object = {...el,selected: !rowData.selected};
             }
-        )
+            return object;
+        })
         this.updateDataSource();
 
         return true
     }
 
     updateDataSource() {
-        const ds = this.imagesArray.slice(4, this.imagesArray.length)
+        const ds = this.imagesArray.slice(4, this.imagesArray.length);
         this.setState({
             dataSource : this.state.dataSource.cloneWithRows(ds),
-        })
+        });
     }
 
     onCamera() {
-        const {onSelectFinished} = this.props.params;
-        Camera.openCameraDialog().then(r=>{
+        const {onSelectFinished} = this.props;
+        SystemImagePicker.openCameraDialog({sourceType:'camera'}).then(r=>{
             onSelectFinished && onSelectFinished([r]);
             this.props.navigator.pop();
         });
+    }
+
+    onFinish() {
+        const {onSelectFinished} = this.props;
+        onSelectFinished && onSelectFinished(this.selectedArray);
+        this.props.navigator.pop();
     }
 }
 

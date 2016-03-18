@@ -11,12 +11,13 @@ import ImagePicker from './ImagePicker'
 const propTypes = {
     list: PropTypes.array,
     onChanged : PropTypes.func,
+    limit : PropTypes.number,
 }
 
 const defaultProps = {
+    limit : 65535,
+    list : [],
 }
-
-const PICKER_LIMIT = 9
 
 export default class ImageAddBlock extends Component {
     constructor(props) {
@@ -27,11 +28,11 @@ export default class ImageAddBlock extends Component {
     }
 
     render() {
-        const {list} = this.props;
-        const limit = PICKER_LIMIT - this.props.list.length;
+        const {list, limit, style} = this.props;
+        const left = limit - this.props.list.length;
 
         return (
-            <View style={[styles.container]}>
+            <View style={[styles.container, style]}>
                 {
                     list && list.map((el,index)=>{
                         const uri = this.getUri(el)
@@ -64,13 +65,13 @@ export default class ImageAddBlock extends Component {
                     })
                 }
                 {
-                    limit>0?
+                    left>0?
                       <TouchableOpacity
                         style = {[styles.listViewItem, styles.addItem]}
                         onPress={()=>{
                             this.props.navigator.push({params:{
                                 onSelectFinished:this.onSelectFinished.bind(this),
-                                limit:limit,
+                                limit:left,
                             }, component: ImagePicker})
                         }}
                       >
@@ -101,9 +102,13 @@ export default class ImageAddBlock extends Component {
     }
 
     onDelete(index) {
-        const r = [...this.props.list];
-        r.splice(index,1);
-        const {onChanged} = this.props;
+        const {onChanged, list} = this.props;
+        const r = list.filter((el,i)=>{
+            if (index === i) {
+                return false;
+            }
+            return true;
+        })
         onChanged && onChanged(r);
     }
 }
