@@ -1,4 +1,4 @@
-package cn.reactnative.modules;
+package cn.reactnative.modules.imagepicker;
 
 import android.app.Activity;
 import android.content.Intent;
