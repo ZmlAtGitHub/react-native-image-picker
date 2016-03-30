@@ -20,10 +20,12 @@ import com.facebook.react.bridge.ReadableMap;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -40,10 +42,13 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
     private static final String KEY_VIDEO_MODE = "videoMode";
     private static final String KEY_VIDEO_QUALITY = "videoQuality";
     private static final String KEY_VIDEO_MAX_DURATION = "videoMaximumDuration";
+    private static final String KEY_ALLOWS_EDITING = "allowsEditing";
 
 
     private static final int CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE = 100;
     private static final int PICK_IMAGE_ACTIVITY_REQUEST_CODE = 101;
+    private static final int CROP_IMAGE_ACTIVITY_REQUEST_CODE = 102;
+    private static final int CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE = 103;
 
     @Override
     public String getName() {
@@ -53,8 +58,10 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
     Callback mResolve = null;
     Callback mReject = null;
     boolean mSavePhoto = false;
+    boolean mAllowsEditing = false;
+    Activity mActivity = null;
 
-    private Uri fileUri;
+    private Uri mFileUri = null;
 
     @Override
     public void initialize() {
@@ -98,6 +105,13 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
             videoMode =  option.getBoolean(KEY_VIDEO_MODE);
         }
 
+        boolean allowsEditing = false;
+        if (option.hasKey(KEY_ALLOWS_EDITING)) {
+            allowsEditing =  option.getBoolean(KEY_ALLOWS_EDITING);
+        }
+        mAllowsEditing = allowsEditing;
+
+        mFileUri = null;
         Intent intent;
         int requestCode = CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE;
         if (sourceType.equals("camera")) {
@@ -111,23 +125,28 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
                     int videoMaxDuration = option.getInt(KEY_VIDEO_MAX_DURATION);
                     intent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, videoMaxDuration);
                 }
-                fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);
+                mFileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);
+                requestCode = CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE;
             }
             else {
                 intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+                mFileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
             }
-
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
         }
         else {
             intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             requestCode = PICK_IMAGE_ACTIVITY_REQUEST_CODE;
         }
 
+        if (mFileUri != null) {
+            Log.e("mFileUri", mFileUri.toString());
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, mFileUri);
+        }
+
         Activity activity = getCurrentActivity();
         if (activity != null) {
             activity.startActivityForResult(intent, requestCode);
+            mActivity = activity;
         }
         else {
             reject("no activity");
@@ -138,37 +157,40 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
+            if (requestCode == CAPTURE_VIDEO_ACTIVITY_REQUEST_CODE) {
+                resolve(mFileUri.toString());
+            }
+            else if (requestCode == CAPTURE_IMAGE_ACTIVITY_REQUEST_CODE) {
                 if (mSavePhoto) {
                     try {
-                        File file = new File(fileUri.getPath());
+                        File file = new File(mFileUri.getPath());
                         MediaStore.Images.Media.insertImage(getReactApplicationContext().getContentResolver(),
-                                fileUri.getPath(), file.getName(), null);
-                        getReactApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, fileUri));
+                                mFileUri.getPath(), file.getName(), null);
+                        getReactApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, mFileUri));
                     } catch (FileNotFoundException e) {
                         reject(e.toString());
                     }
                 }
-                resolve(fileUri.toString());
-            }
-            else if (requestCode == PICK_IMAGE_ACTIVITY_REQUEST_CODE) {
-                Uri selectedImage = data.getData();
-                String[] filePathColumns={MediaStore.Images.Media.DATA};
-                Cursor c = getReactApplicationContext().getContentResolver().query(selectedImage, filePathColumns, null,null, null);
-                if (c != null) {
-                    c.moveToFirst();
-                    int columnIndex = c.getColumnIndex(filePathColumns[0]);
-                    String path= c.getString(columnIndex);
-                    c.close();
-
-                    path = Uri.fromFile(new File(path)).toString();
-                    resolve(path);
+                if (mAllowsEditing) {
+                    startCropIntent(mFileUri);
                 }
                 else {
-                    reject("error");
+                    resolve(mFileUri.toString());
                 }
             }
-
+            else if (requestCode == PICK_IMAGE_ACTIVITY_REQUEST_CODE) {
+                Uri uri = data.getData();
+                if (mAllowsEditing) {
+                    startCropIntent(uri);
+                }
+                else {
+                    String path = getRealPath(uri);
+                    resolve(path);
+                }
+            }
+            else if (requestCode == CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+                resolve(mFileUri.toString());
+            }
         }
         else if (resultCode == Activity.RESULT_CANCELED) {
             reject("Cancelled");
@@ -176,7 +198,40 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
         else {
             reject("ResultError");
         }
+    }
 
+    void startCropIntent(Uri uri) {
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        intent.setDataAndType(uri, "image/*");
+        intent.putExtra("crop", "true");
+        intent.putExtra("aspectX", 1);
+        intent.putExtra("aspectY", 1);
+        mFileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, mFileUri);
+
+        if (mActivity != null) {
+            mActivity.startActivityForResult(intent, CROP_IMAGE_ACTIVITY_REQUEST_CODE);
+        }
+        else {
+            reject("no activity");
+        }
+    }
+
+    String getRealPath(Uri uri) {
+        String[] filePathColumns={MediaStore.Images.Media.DATA};
+        Cursor c = getReactApplicationContext().getContentResolver().query(uri, filePathColumns, null,null, null);
+        if (c != null) {
+            c.moveToFirst();
+            int columnIndex = c.getColumnIndex(filePathColumns[0]);
+            String path= c.getString(columnIndex);
+            c.close();
+
+            path = Uri.fromFile(new File(path)).toString();
+            return path;
+        }
+        else {
+            return uri.toString();
+        }
     }
 
     void reject(String message) {
@@ -205,47 +260,36 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
 
     private File getOutputMediaFile(int type)
     {
-        getReactApplicationContext().getPackageName();
-        File mediaStorageDir = null;
-        try
-        {
-            mediaStorageDir = new File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                    "camera");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-        if (!mediaStorageDir.exists())
-        {
-            if (!mediaStorageDir.mkdirs())
-            {
-                // <uses-permission
-                // android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-                return null;
-            }
-        }
-
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.CHINA)
                 .format(new Date());
-        File mediaFile;
+        String fileName = "";
         if (type == MEDIA_TYPE_IMAGE)
         {
-            mediaFile = new File(mediaStorageDir.getPath() + File.separator
-                    + "IMG_" + timeStamp + ".jpg");
+            fileName = "IMG_" + timeStamp + ".jpg";
         }
         else if (type == MEDIA_TYPE_VIDEO)
         {
-            mediaFile = new File(mediaStorageDir.getPath() + File.separator
-                    + "VID_" + timeStamp + ".mp4");
-        }
-        else
-        {
-            return null;
+            fileName = "VID_" + timeStamp + ".mp4";
         }
 
-        return mediaFile;
+        File fileDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), getReactApplicationContext().getPackageName());
+//        File fileDir;
+//        if (mSavePhoto) {
+//            fileDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), getReactApplicationContext().getPackageName());
+//        }
+//        else {
+//            fileDir = getReactApplicationContext().getCacheDir();
+//        }
+        if (!fileDir.exists()) {
+            fileDir.mkdirs();
+        }
+
+        File file = new File(fileDir, fileName);
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
     }
 }
