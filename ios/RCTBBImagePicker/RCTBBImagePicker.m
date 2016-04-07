@@ -15,6 +15,7 @@
 #import "RCTAssetsLibraryRequestHandler.h"
 #import <AssetsLibrary/AssetsLibrary.h>
 #import "RCTImageStoreManager.h"
+#import "RCTCameraRollManager.h"
 
 @interface RCTBBImagePicker()<UINavigationControllerDelegate, UIImagePickerControllerDelegate>
 
@@ -51,6 +52,26 @@ RCT_EXPORT_MODULE(BBImagePicker);
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_get_main_queue();
+}
+
+RCT_EXPORT_METHOD(getAlumGroupNames:(NSDictionary *)params
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    ALAssetsGroupType groupTypes = [RCTConvert ALAssetsGroupType:params[@"groupTypes"]];
+
+    NSMutableArray *groupNames = [NSMutableArray new];
+    [_bridge.assetsLibrary enumerateGroupsWithTypes:groupTypes usingBlock:^(ALAssetsGroup *group, BOOL *stopGroups) {
+        if (group) {
+            [groupNames addObject:[group valueForProperty:ALAssetsGroupPropertyName]];
+        }
+        else {
+            resolve(groupNames);
+        }
+    } failureBlock:^(NSError *error) {
+        reject([NSString stringWithFormat:@"%d",error.code], nil, error);
+    }];
+
 }
 
 RCT_EXPORT_METHOD(openCamera:(NSDictionary *)options resolve:(RCTResponseSenderBlock)resolve reject:(RCTResponseSenderBlock)reject)
