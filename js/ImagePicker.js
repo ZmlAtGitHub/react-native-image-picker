@@ -14,6 +14,7 @@ const propTypes = {
     limit : PropTypes.number,
     onSelectFinished : PropTypes.func,
     navigator : PropTypes.object,
+    groupName : PropTypes.string,
 }
 
 const defaultProps = {
@@ -179,16 +180,18 @@ export default class ImagePicker extends Component {
             this.imagesArray = []
         }
 
-        const list = this.imagesArray;
+        const length = this.imagesArray.length;
+        const lastObject = this.imagesArray[length-1];
 
         this.getPhotos({
+            groupName : this.props.groupName,
               first: 100,
-              after: (next && list.length > 0) ? this.getImage(list[list.length - 1]) : undefined,
+              after: (next && length > 0) ? this.getImage(lastObject) : undefined,
           },
           data=> {
               if (data.edges.length) {
                   data.edges.forEach(el=> {
-                      list.push({...el, selected:false});
+                      this.imagesArray.push({...el, selected:false});
                   })
 
                   InteractionManager.runAfterInteractions(() => {
