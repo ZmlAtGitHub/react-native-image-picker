@@ -19,6 +19,7 @@ const propTypes = {
 
 const defaultProps = {
     limit: 65535,
+    groupName : undefined
 }
 
 export default class ImagePicker extends Component {
