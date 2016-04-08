@@ -54,19 +54,37 @@ RCT_EXPORT_MODULE(BBImagePicker);
     return dispatch_get_main_queue();
 }
 
-RCT_EXPORT_METHOD(getAlumGroupNames:(NSDictionary *)params
+RCT_EXPORT_METHOD(getAssetsGroups:(NSDictionary *)params
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
+    static NSDictionary *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        map = @{
+                // Legacy values
+                @(ALAssetsGroupAlbum) : @"Album",
+                @(ALAssetsGroupAll) : @"All" ,
+                @(ALAssetsGroupEvent) : @"Event",
+                @(ALAssetsGroupFaces) :@"Faces",
+                @(ALAssetsGroupLibrary): @"Library",
+                @(ALAssetsGroupPhotoStream) : @"PhotoStream",
+                @(ALAssetsGroupSavedPhotos) : @"SavedPhotos",
+                };
+    });
+    
     ALAssetsGroupType groupTypes = [RCTConvert ALAssetsGroupType:params[@"groupTypes"]];
-
-    NSMutableArray *groupNames = [NSMutableArray new];
+    
+    NSMutableArray *groups = [NSMutableArray new];
     [_bridge.assetsLibrary enumerateGroupsWithTypes:groupTypes usingBlock:^(ALAssetsGroup *group, BOOL *stopGroups) {
         if (group) {
-            [groupNames addObject:[group valueForProperty:ALAssetsGroupPropertyName]];
+            [groups addObject:@{
+                @"groupName":[group valueForProperty:ALAssetsGroupPropertyName],
+                @"groupTypes":map[[group valueForProperty:ALAssetsGroupPropertyType]]
+            }];
         }
         else {
-            resolve(groupNames);
+            resolve(groups);
         }
     } failureBlock:^(NSError *error) {
         reject([NSString stringWithFormat:@"%d",error.code], nil, error);

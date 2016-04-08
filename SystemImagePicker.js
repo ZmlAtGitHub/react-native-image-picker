@@ -21,9 +21,9 @@ const SystemImagePicker = {
   },
 
   // option
-  // groupTypes : 'all', 'album', 'saved-photos', 'library'
-  getAlumGroupNames : (option={groupTypes:'all'})=>{
-    return ImagePicker.getAlumGroupNames && ImagePicker.getAlumGroupNames(option)
+  // groupTypes : 'All', 'Album', 'SavedPhotos', 'Library'
+  getAssetsGroups : (option={groupTypes:'All'})=>{
+    return ImagePicker.getAssetsGroups && ImagePicker.getAssetsGroups(option)
   },
 };
 
