@@ -11,21 +11,22 @@ import semver from 'semver';
 import packageData from 'react-native/package.json';
 
 const propTypes = {
+    pageSize : PropTypes.number,
     limit : PropTypes.number,
     onSelectFinished : PropTypes.func,
     navigator : PropTypes.object,
-    groupName : PropTypes.string,
 }
 
 const defaultProps = {
     limit: 65535,
-    groupName : undefined
+    pageSize : 100,
 }
 
 export default class ImagePicker extends Component {
     constructor(props) {
         super(props);
 
+        this.hasMore = true;
         this.imagesArray = [];
         this.selectedArray = [];
 
@@ -176,8 +177,12 @@ export default class ImagePicker extends Component {
 
     fetchData(next) {
         if (next) {
+            if (!this.hasMore) {
+                return
+            }
         }
         else {
+            this.hasMore = true
             this.imagesArray = []
         }
 
@@ -185,11 +190,13 @@ export default class ImagePicker extends Component {
         const lastObject = this.imagesArray[length-1];
 
         this.getPhotos({
-            groupName : this.props.groupName,
-              first: 100,
+              first: this.props.pageSize,
               after: (next && length > 0) ? this.getImage(lastObject) : undefined,
           },
           data=> {
+              if (r.edges.length < this.props.pageSize) {
+                  this.hasMore = false
+              }
               if (data.edges.length) {
                   data.edges.forEach(el=> {
                       this.imagesArray.push({...el, selected:false});
