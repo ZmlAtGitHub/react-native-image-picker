@@ -16,7 +16,14 @@ const SystemImagePicker = {
   // -- videoQuality : ios(0-2,high to low) android(0.0-1.0 low to high)
   openCameraDialog: (option) => {
     return new Promise((resolve, reject)=>{
-      ImagePicker.openCamera(option||{}, resolve, reject);
+      ImagePicker.openCamera(option||{}, (uri, width, height)=>{
+        if (width && height) {
+          resolve({uri, width, height})
+        }
+        else {
+          resolve({uri})
+        }
+      }, reject);
     });
   },
 

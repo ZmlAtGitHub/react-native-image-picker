@@ -181,14 +181,14 @@ RCT_EXPORT_METHOD(openCamera:(NSDictionary *)options resolve:(RCTResponseSenderB
                         [self _dismissPicker:picker args:nil];
                     }
                     else {
-                        [self _dismissPicker:picker args:@[assetURL.absoluteString]];
+                        [self _dismissPicker:picker args:@[assetURL.absoluteString, @(image.size.width*image.scale), @(image.size.height*image.scale)]];
                     }
                 }];
             }
             else {
                 [_bridge.imageStoreManager storeImage:image withBlock:^(NSString *tempImageTag) {
                     if (tempImageTag) {
-                        [self _dismissPicker:picker args:@[tempImageTag]];
+                        [self _dismissPicker:picker args:@[tempImageTag, @(image.size.width*image.scale), @(image.size.height*image.scale)]];
                     }
                     else {
                         [self _dismissPicker:picker args:nil];
