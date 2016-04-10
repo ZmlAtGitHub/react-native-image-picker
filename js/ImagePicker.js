@@ -26,9 +26,10 @@ export default class ImagePicker extends Component {
     constructor(props) {
         super(props);
 
-        this.hasMore = true;
         this.imagesArray = [];
         this.selectedArray = [];
+        this.end_cursor = undefined
+        this.fetching = false
 
         this.state = {
             dataSource: new ListView.DataSource({rowHasChanged: (r1, r2) => (r1 !== r2 || r1.selected!==r2.selected)}).cloneWithRows([]),
@@ -176,29 +177,29 @@ export default class ImagePicker extends Component {
     }
 
     fetchData(next) {
+        if (this.fetching) {
+            return
+        }
         if (next) {
-            if (!this.hasMore) {
+            if (!this.end_cursor) {
                 return
             }
         }
         else {
-            this.hasMore = true
             this.imagesArray = []
+            this.end_cursor = undefined
         }
-
-        const length = this.imagesArray.length;
-        const lastObject = this.imagesArray[length-1];
 
         this.getPhotos({
               first: this.props.pageSize,
-              after: (next && length > 0) ? this.getImage(lastObject) : undefined,
+              after : this.end_cursor,
           },
           data=> {
-              if (r.edges.length < this.props.pageSize) {
-                  this.hasMore = false
-              }
-              if (data.edges.length) {
-                  data.edges.forEach(el=> {
+              const {page_info, edges} = data
+              this.end_cursor = page_info.end_cursor
+
+              if (edges.length) {
+                  edges.forEach(el=> {
                       this.imagesArray.push({...el, selected:false});
                   })
 
@@ -206,8 +207,10 @@ export default class ImagePicker extends Component {
                       this.updateDataSource();
                   });
               }
+              this.fetching = false
           },
           e=> {
+              this.fetching = false
           }
         );
     }
