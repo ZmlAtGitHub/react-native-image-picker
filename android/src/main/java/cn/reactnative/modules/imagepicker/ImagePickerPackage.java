@@ -19,6 +19,7 @@ public class ImagePickerPackage implements ReactPackage {
         return Arrays.asList(new NativeModule[]{
                 // Modules from third-party
                 new ImagePickerModule(reactContext),
+                new ImageUtilModule(reactContext)
         });
     }
 

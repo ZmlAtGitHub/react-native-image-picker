@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		91E1E7421C993A0400430717 /* RCTBBImagePicker.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 91E1E7411C993A0400430717 /* RCTBBImagePicker.h */; };
 		91E1E7441C993A0400430717 /* RCTBBImagePicker.m in Sources */ = {isa = PBXBuildFile; fileRef = 91E1E7431C993A0400430717 /* RCTBBImagePicker.m */; };
+		9F4185581CC72C8C005E58B5 /* RCTBBImageUtil.m in Sources */ = {isa = PBXBuildFile; fileRef = 9F4185571CC72C8C005E58B5 /* RCTBBImageUtil.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,6 +29,8 @@
 		91E1E73E1C993A0400430717 /* libRCTBBImagePicker.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRCTBBImagePicker.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		91E1E7411C993A0400430717 /* RCTBBImagePicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTBBImagePicker.h; sourceTree = "<group>"; };
 		91E1E7431C993A0400430717 /* RCTBBImagePicker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTBBImagePicker.m; sourceTree = "<group>"; };
+		9F4185561CC72C8C005E58B5 /* RCTBBImageUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCTBBImageUtil.h; sourceTree = "<group>"; };
+		9F4185571CC72C8C005E58B5 /* RCTBBImageUtil.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCTBBImageUtil.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,6 +63,8 @@
 		91E1E7401C993A0400430717 /* RCTBBImagePicker */ = {
 			isa = PBXGroup;
 			children = (
+				9F4185561CC72C8C005E58B5 /* RCTBBImageUtil.h */,
+				9F4185571CC72C8C005E58B5 /* RCTBBImageUtil.m */,
 				91E1E7411C993A0400430717 /* RCTBBImagePicker.h */,
 				91E1E7431C993A0400430717 /* RCTBBImagePicker.m */,
 			);
@@ -123,6 +128,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				91E1E7441C993A0400430717 /* RCTBBImagePicker.m in Sources */,
+				9F4185581CC72C8C005E58B5 /* RCTBBImageUtil.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
