@@ -7,7 +7,10 @@
 //
 
 #import "RCTBridgeModule.h"
+#import <UIKit/UIKit.h>
 
 @interface RCTBBImageUtil : NSObject<RCTBridgeModule>
+
++ (UIImage *)imageOfFixedOrientation:(UIImage *)aImage;
 
 @end
