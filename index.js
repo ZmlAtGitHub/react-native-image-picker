@@ -5,10 +5,10 @@
 
 import SystemImagePicker from './SystemImagePicker';
 import ImageAddBlock from './js/ImageAddBlock';
-//import ImagePicker from './js/ImagePicker';
+import ImagePicker from './js/ImagePicker';
 
 module.exports = {
   SystemImagePicker,
   ImageAddBlock,
-  //ImagePicker,
+  ImagePicker,
 };
