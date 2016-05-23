@@ -15,6 +15,8 @@
 
 @synthesize bridge = _bridge;
 
+RCT_EXPORT_MODULE();
+
 - (dispatch_queue_t)methodQueue
 {
     return dispatch_get_main_queue();
@@ -54,19 +56,14 @@ RCT_EXPORT_METHOD(fixedOrientationOfImage:(NSString *)imageTag resolve:(RCTPromi
         }
         else {
             image = [RCTBBImageUtil imageOfFixedOrientation:image];
-            if (image == image) {
-                resolve(imageTag);
-            }
-            else {
-                [_bridge.imageStoreManager storeImage:image withBlock:^(NSString *tempImageTag) {
-                    if (tempImageTag) {
-                        resolve(tempImageTag);
-                    }
-                    else {
-                        reject(@"-1", @"save error", nil);
-                    }
-                }];
-            }
+            [_bridge.imageStoreManager storeImage:image withBlock:^(NSString *tempImageTag) {
+                if (tempImageTag) {
+                    resolve(tempImageTag);
+                }
+                else {
+                    reject(@"-1", @"save error", nil);
+                }
+            }];
         }
     }];
 }
