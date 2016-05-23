@@ -64,6 +64,7 @@ export default class ImagePicker extends Component {
                   this.renderNavBar()
                 }
                 <ListView
+                    enableEmptySections={true}
                     renderHeader={this.renderHeader.bind(this)}
                     dataSource={dataSource}
                     renderRow={(rowData, sectionID, rowID) => {
@@ -278,6 +279,10 @@ export default class ImagePicker extends Component {
     }
 
     onFinish() {
+        if (this.selectedArray.length < 1) {
+            Alert.alert('至少选择一张')
+            return
+        }
         const {onSelectFinished} = this.props;
         onSelectFinished && onSelectFinished(this.selectedArray);
         this.props.navigator.pop();
