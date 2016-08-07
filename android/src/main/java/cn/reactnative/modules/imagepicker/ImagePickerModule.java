@@ -2,18 +2,15 @@ package cn.reactnative.modules.imagepicker;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
@@ -21,7 +18,6 @@ import com.facebook.react.bridge.ReadableMap;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -198,6 +194,12 @@ public class ImagePickerModule extends ReactContextBaseJavaModule implements Act
             reject("ResultError");
         }
     }
+
+//    @Override
+//    public void onNewIntent(Intent intent)
+//    {
+//
+//    }
 
     void startCropIntent(Uri uri) {
         Intent intent = new Intent("com.android.camera.action.CROP");

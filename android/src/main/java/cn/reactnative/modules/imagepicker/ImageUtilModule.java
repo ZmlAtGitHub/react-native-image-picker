@@ -1,9 +1,7 @@
 package cn.reactnative.modules.imagepicker;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.BitmapDrawable;
@@ -11,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.util.Base64;
 
@@ -40,9 +37,6 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Date;
 
 /**
  * Created by lvbingru on 16/4/20.
@@ -136,21 +130,21 @@ public class ImageUtilModule extends ReactContextBaseJavaModule {
                             out.close();
                             mPromise.resolve(Base64.encodeToString(out.toByteArray(), Base64.DEFAULT));
                         } else {
-                            mPromise.reject("-1", "compress failed");
+                            mPromise.reject("compress failed");
                         }
                     } catch (Exception e) {
-                        mPromise.reject("-1", e.getMessage());
+                        mPromise.reject(e.getMessage());
                     }
                 }
 
                 @Override
                 public void onFailure(DataSource<CloseableReference<CloseableImage>> dataSource) {
-                    mPromise.reject("-1", "failed");
+                    mPromise.reject("failed");
                 }
 
                 @Override
                 public void onCancellation(DataSource<CloseableReference<CloseableImage>> dataSource) {
-                    mPromise.reject("-1", "canceled");
+                    mPromise.reject("canceled");
                 }
 
                 @Override
