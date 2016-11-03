@@ -22,7 +22,7 @@ RCT_EXPORT_MODULE();
     return dispatch_get_main_queue();
 }
 
-RCT_EXPORT_METHOD(scaleImage:(NSString *)imageTag options:(NSDictionary *)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(scaleImage:(NSURLRequest *)request options:(NSDictionary *)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 {
     CGFloat width = [RCTConvert CGFloat:options[@"width"]];
     CGFloat height = [RCTConvert CGFloat:options[@"height"]];
@@ -30,7 +30,11 @@ RCT_EXPORT_METHOD(scaleImage:(NSString *)imageTag options:(NSDictionary *)option
     NSString *type = [RCTConvert NSString:@"type"];
     CGFloat quality = [RCTConvert CGFloat:@"quality"];
     
-    [_bridge.imageLoader loadImageWithTag:imageTag size:CGSizeMake(width, height) scale:1.0 resizeMode:resizeMode progressBlock:NULL completionBlock:^(NSError *error, UIImage *image) {
+    [_bridge.imageLoader loadImageWithURLRequest:request size:CGSizeMake(width, height) scale:1.0 clipped:NO resizeMode:resizeMode progressBlock:^(int64_t progress, int64_t total) {
+    } partialLoadBlock:^(UIImage *image) {
+    } completionBlock:^(NSError *error, UIImage *image) {
+    }];
+    [_bridge.imageLoader loadImageWithURLRequest:[NSURLRequest requestWithURL:nil] callback:^(NSError *error, UIImage *image) {
         if (error) {
             reject([NSString stringWithFormat:@"%ld", error.code], error.description, error);
         }
@@ -48,9 +52,9 @@ RCT_EXPORT_METHOD(scaleImage:(NSString *)imageTag options:(NSDictionary *)option
     }];
 }
 
-RCT_EXPORT_METHOD(fixedOrientationOfImage:(NSString *)imageTag resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
+RCT_EXPORT_METHOD(fixedOrientationOfImage:(NSURLRequest *)request resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 {
-    [_bridge.imageLoader loadImageWithTag:imageTag callback:^(NSError *error, UIImage *image) {
+    [_bridge.imageLoader loadImageWithURLRequest:request callback:^(NSError *error, UIImage *image) {
         if (error) {
             reject([NSString stringWithFormat:@"%ld", error.code], error.description, error);
         }
